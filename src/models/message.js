@@ -1,10 +1,6 @@
 import mongoose from "mongoose";
 const userSchema = mongoose.Schema({
-  clientSocketId: {
-    type: String,
-  },
-  //Mongo id
-  adminId: {
+  clientSessionId: {
     type: String,
   },
   message: {
@@ -15,6 +11,9 @@ const userSchema = mongoose.Schema({
   },
   viewedByUser: {
     type: Boolean,
+  },
+  createdAt: {
+    type: Number,
   },
 });
 

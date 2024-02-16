@@ -6,7 +6,7 @@ import { config } from "dotenv";
 import morgan from "morgan";
 import startServer from "./start.js";
 import cors from "cors";
-import { adminsMapper } from "./utils/index.js";
+import { adminsMapper, clientsMapper } from "./utils/index.js";
 
 config();
 
@@ -33,8 +33,39 @@ io.on("connection", function (socket) {
   const isAdminUser =
     socket.handshake.headers.origin === process.env.ADMIN_SOCKET_CONNECTION_URL;
   if (isAdminUser) {
-    adminsMapper.push({ socketId: socket.client.id, activeUsersCount: 0 });
+    adminsMapper.push({ socketId: socket.client.id });
+
+    socket.on("disconnect", () => {
+      const index = adminsMapper.findIndex(
+        (admin) => admin.socketId === socket.client.id,
+      );
+
+      adminsMapper.splice(index, 1);
+      console.log("An admin has left the chat");
+    });
+  } else {
+    console.log(socket.client.id);
+    socket.on("send-session-id", ({ sessionId }) => {
+      const alreadyExists = clientsMapper.find(
+        (user) => user.socketId === socket.client.id,
+      );
+      if (alreadyExists) {
+        return;
+      }
+
+      console.log("session id received");
+      clientsMapper.push({ socketId: socket.client.id, sessionId });
+    });
+
+    socket.on("disconnect", () => {
+      const index = clientsMapper.findIndex(
+        (user) => user.socketId === socket.client.id,
+      );
+
+      clientsMapper.splice(index, 1);
+      console.log("A client has left the chat");
+    });
   }
 
-  console.log("Client user connected");
+  console.log("A new socket has connected");
 });
