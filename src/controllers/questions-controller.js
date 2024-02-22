@@ -90,13 +90,17 @@ export default class QuestionsController {
 
   static async getMessagesByClientId(req, res) {
     try {
-      if (!req.body.clientSessionId) {
+      const clientSessionId = req.query.clientSessionId;
+      if (!clientSessionId) {
         return res
           .status(400)
           .json({ message: "clientSessionId was not provided" });
       }
 
-      return Message.find({ clientSessionId: req.body.clientSessionId });
+      const messages = await Message.find({
+        clientSessionId,
+      });
+      return res.status(200).json({ data: messages });
     } catch (err) {
       return res.status(500).json({ message: err.message });
     }
