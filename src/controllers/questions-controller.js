@@ -145,7 +145,7 @@ export default class QuestionsController {
         (user) => user.sessionId === req.body.clientSessionId,
       );
       if (clientSocketId) {
-        req.io.to(clientSocketId).emit("send-response", message);
+        req.io.to(clientSocketId.socketId).emit("send-response", message);
       }
       return res.status(201).json({ data: message });
     } catch (err) {

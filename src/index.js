@@ -48,6 +48,7 @@ io.on("connection", function (socket) {
   } else {
     console.log(socket.id);
     socket.on("send-session-id", ({ sessionId }) => {
+      console.log(sessionId);
       const alreadyExists = clientsMapper.find(
         (user) => user.socketId === socket.id,
       );
