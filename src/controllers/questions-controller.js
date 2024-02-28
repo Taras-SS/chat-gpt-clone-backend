@@ -43,6 +43,7 @@ export default class QuestionsController {
         adminsMapper.map((admin) =>
           req.io.to(admin.socketId).emit("send-question-to-admin", {
             question: req.body.question,
+            clientSessionId: req.body.clientSessionId
           }),
         );
 
