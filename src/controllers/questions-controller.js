@@ -14,6 +14,10 @@ export default class QuestionsController {
           .json({ message: "clientSessionId was not provided" });
       }
 
+      const keyWords = process.env.KEY_WORDS?.split(",")
+        .map((keyWord) => keyWord.trim())
+        .filter(Boolean);
+
       if (!req.body.question?.trim()) {
         return res.status(400).json({ message: "question was not provided" });
       }
@@ -29,6 +33,22 @@ export default class QuestionsController {
         viewedByUser: true,
         message: req.body.question,
       });
+      await question.save();
+
+      const containsKeyword = keyWords.find((keyWord) =>
+        req.body.question.includes(keyWord),
+      );
+
+      if (req.body.connectedWithAdmin || containsKeyword) {
+        adminsMapper.map((admin) =>
+          req.io.to(admin.socketId).emit("send-question-to-admin", {
+            question: req.body.question,
+          }),
+        );
+
+        return res.status(201).json({ connectedWithAdmin: true });
+      }
+
       const chatGPTMessage = new Message({
         clientSessionId: req.body.clientSessionId,
         createdAt: new Date().getTime(),
@@ -36,17 +56,9 @@ export default class QuestionsController {
         viewedByUser: true,
         message: JSON.stringify(chatGPTResponse),
       });
-      await question.save();
       await chatGPTMessage.save();
 
-      adminsMapper.map((admin) =>
-        req.io.to(admin.socketId).emit("send-question", {
-          question: req.body.question,
-          answer: chatGPTResponse,
-        }),
-      );
-
-      return res.status(200).json({ answers: chatGPTResponse });
+      return res.status(201).json({ answers: chatGPTResponse });
     } catch (err) {
       return res.status(500).json({ message: err.message });
     }
