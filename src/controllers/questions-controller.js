@@ -14,6 +14,39 @@ export default class QuestionsController {
           .json({ message: "clientSessionId was not provided" });
       }
 
+      const isStaticMessage =
+        req.body.question?.trim() && req.body.answer?.trim();
+
+      if (isStaticMessage) {
+        const question = new Message({
+          clientSessionId: req.body.clientSessionId,
+          createdAt: new Date().getTime(),
+          viewedByAdmin: false,
+          viewedByUser: true,
+          message: req.body.question,
+        });
+
+        const answer = new Message({
+          clientSessionId: req.body.clientSessionId,
+          createdAt: new Date().getTime(),
+          viewedByAdmin: false,
+          viewedByUser: true,
+          message: req.body.answer,
+        });
+
+        await question.save();
+        await answer.save();
+
+        adminsMapper.map((admin) =>
+          req.io.to(admin.socketId).emit("send-question-to-admin", {
+            question: req.body.question,
+            answer: req.body.answer,
+          }),
+        );
+
+        return res.status(201).json({ connectedWithAdmin: true });
+      }
+
       const keyWords = process.env.KEY_WORDS?.split(",")
         .map((keyWord) => keyWord.trim())
         .filter(Boolean);
@@ -21,10 +54,6 @@ export default class QuestionsController {
       if (!req.body.question?.trim()) {
         return res.status(400).json({ message: "question was not provided" });
       }
-
-      const chatGPTResponse = await OpenAIService.askQuestion(
-        req.body.question,
-      );
 
       const question = new Message({
         clientSessionId: req.body.clientSessionId,
@@ -49,6 +78,10 @@ export default class QuestionsController {
         return res.status(201).json({ connectedWithAdmin: true });
       }
 
+      const chatGPTResponse = await OpenAIService.askQuestion(
+        req.body.question,
+      );
+
       const chatGPTMessage = new Message({
         clientSessionId: req.body.clientSessionId,
         createdAt: new Date().getTime(),
@@ -57,6 +90,13 @@ export default class QuestionsController {
         message: JSON.stringify(chatGPTResponse),
       });
       await chatGPTMessage.save();
+
+      adminsMapper.map((admin) =>
+        req.io.to(admin.socketId).emit("send-question-to-admin", {
+          question: req.body.question,
+          answer: chatGPTResponse,
+        }),
+      );
 
       return res.status(201).json({ answers: chatGPTResponse });
     } catch (err) {
