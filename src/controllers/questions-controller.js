@@ -72,6 +72,7 @@ export default class QuestionsController {
         adminsMapper.map((admin) =>
           req.io.to(admin.socketId).emit("send-question-to-admin", {
             question: req.body.question,
+            clientSessionId: req.body.clientSessionId
           }),
         );
 
@@ -184,7 +185,7 @@ export default class QuestionsController {
         (user) => user.sessionId === req.body.clientSessionId,
       );
       if (clientSocketId) {
-        req.io.to(clientSocketId).emit("send-response", message);
+        req.io.to(clientSocketId.socketId).emit("send-response", message);
       }
       return res.status(201).json({ data: message });
     } catch (err) {

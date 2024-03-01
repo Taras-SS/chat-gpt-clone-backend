@@ -30,36 +30,39 @@ app.use("/api", routes.questionRouters);
 app.use("/api/auth", routes.authRouter);
 
 io.on("connection", function (socket) {
+  console.log(socket.id);
   const isAdminUser =
-    socket.handshake.headers.origin === process.env.ADMIN_SOCKET_CONNECTION_URL;
+    socket.handshake.query.isAdmin === 'true';
+  console.log(isAdminUser, ' isAdminUser');
   if (isAdminUser) {
-    adminsMapper.push({ socketId: socket.client.id });
+    adminsMapper.push({ socketId: socket.id });
 
     socket.on("disconnect", () => {
       const index = adminsMapper.findIndex(
-        (admin) => admin.socketId === socket.client.id,
+        (admin) => admin.socketId === socket.id,
       );
 
       adminsMapper.splice(index, 1);
       console.log("An admin has left the chat");
     });
   } else {
-    console.log(socket.client.id);
+    console.log(socket.id);
     socket.on("send-session-id", ({ sessionId }) => {
+      console.log(sessionId);
       const alreadyExists = clientsMapper.find(
-        (user) => user.socketId === socket.client.id,
+        (user) => user.socketId === socket.id,
       );
       if (alreadyExists) {
         return;
       }
 
       console.log("session id received");
-      clientsMapper.push({ socketId: socket.client.id, sessionId });
+      clientsMapper.push({ socketId: socket.id, sessionId });
     });
 
     socket.on("disconnect", () => {
       const index = clientsMapper.findIndex(
-        (user) => user.socketId === socket.client.id,
+        (user) => user.socketId === socket.id,
       );
 
       clientsMapper.splice(index, 1);
