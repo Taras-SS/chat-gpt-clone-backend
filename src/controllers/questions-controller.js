@@ -34,8 +34,8 @@ export default class QuestionsController {
           message: req.body.answer,
         });
 
-        await question.save();
-        await answer.save();
+        const savedQuestion = await question.save();
+        const savedAnswer = await answer.save();
 
         adminsMapper.map((admin) =>
           req.io.to(admin.socketId).emit("send-question-to-admin", {
@@ -44,7 +44,9 @@ export default class QuestionsController {
           }),
         );
 
-        return res.status(201).json({ connectedWithAdmin: true });
+        return res
+          .status(201)
+          .json({ answer: savedAnswer, question: savedQuestion });
       }
 
       const keyWords = process.env.KEY_WORDS?.split(",")
@@ -72,7 +74,7 @@ export default class QuestionsController {
         adminsMapper.map((admin) =>
           req.io.to(admin.socketId).emit("send-question-to-admin", {
             question: req.body.question,
-            clientSessionId: req.body.clientSessionId
+            clientSessionId: req.body.clientSessionId,
           }),
         );
 
@@ -197,7 +199,14 @@ export default class QuestionsController {
     try {
       const chats = await Message.aggregate([
         {
-          $group: { _id: "$clientSessionId", doc: { $first: "$$ROOT" } },
+          $group: {
+            _id: "$clientSessionId",
+            doc: { $first: "$$ROOT" },
+            createdAt: { $max: "$createdAt" },
+          },
+        },
+        {
+          $sort: { createdAt: -1 },
         },
       ]);
       return res.status(200).json({ data: chats });
