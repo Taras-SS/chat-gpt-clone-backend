@@ -41,6 +41,7 @@ export default class QuestionsController {
           req.io.to(admin.socketId).emit("send-question-to-admin", {
             question: req.body.question,
             answer: req.body.answer,
+            clientSessionId: req.body.clientSessionId,
           }),
         );
 
@@ -98,6 +99,7 @@ export default class QuestionsController {
         req.io.to(admin.socketId).emit("send-question-to-admin", {
           question: req.body.question,
           answer: chatGPTResponse,
+          clientSessionId: req.body.clientSessionId,
         }),
       );
 
