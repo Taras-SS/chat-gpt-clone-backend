@@ -66,21 +66,21 @@ io.on("connection", function (socket) {
       clientsMapper.splice(index, 1);
       console.log("A client has left the chat");
     });
-
-    socket.on("connect-with-gpt", (res) => {
-      if (!res.sessionId) {
-        return;
-      }
-
-      const client = clientsMapper.find(
-        (user) => user.sessionId === res.sessionId,
-      );
-
-      if (client) {
-        socket.to(client.socketId).emit("connect-with-gpt", {});
-      }
-    });
   }
+
+  socket.on("connect-with-gpt", (res) => {
+    if (!res.sessionId) {
+      return;
+    }
+
+    const client = clientsMapper.find(
+      (user) => user.sessionId === res.sessionId,
+    );
+
+    if (client) {
+      socket.to(client.socketId).emit("connect-with-gpt", {});
+    }
+  });
 
   console.log("A new socket has connected");
 });
