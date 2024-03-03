@@ -203,7 +203,7 @@ export default class QuestionsController {
         {
           $group: {
             _id: "$clientSessionId",
-            doc: { $first: "$$ROOT" },
+            doc: { $last: "$$ROOT" },
             createdAt: { $max: "$createdAt" },
           },
         },
