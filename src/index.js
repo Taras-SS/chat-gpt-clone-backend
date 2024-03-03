@@ -31,9 +31,8 @@ app.use("/api/auth", routes.authRouter);
 
 io.on("connection", function (socket) {
   console.log(socket.id);
-  const isAdminUser =
-    socket.handshake.query.isAdmin === 'true';
-  console.log(isAdminUser, ' isAdminUser');
+  const isAdminUser = socket.handshake.query.isAdmin === "true";
+  console.log(isAdminUser, " isAdminUser");
   if (isAdminUser) {
     adminsMapper.push({ socketId: socket.id });
 
@@ -46,7 +45,6 @@ io.on("connection", function (socket) {
       console.log("An admin has left the chat");
     });
   } else {
-    console.log(socket.id);
     socket.on("send-session-id", ({ sessionId }) => {
       console.log(sessionId);
       const alreadyExists = clientsMapper.find(
@@ -67,6 +65,20 @@ io.on("connection", function (socket) {
 
       clientsMapper.splice(index, 1);
       console.log("A client has left the chat");
+    });
+
+    socket.on("connect-with-gpt", (res) => {
+      if (!res.sessionId) {
+        return;
+      }
+
+      const client = clientsMapper.find(
+        (user) => user.sessionId === res.sessionId,
+      );
+
+      if (client) {
+        socket.to(client.socketId).emit("connect-with-gpt", {});
+      }
     });
   }
 
