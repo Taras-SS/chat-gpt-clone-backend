@@ -24,6 +24,7 @@ export default class QuestionsController {
           viewedByAdmin: false,
           viewedByUser: true,
           message: req.body.question,
+          sentByAdmin: false,
         });
 
         const answer = new Message({
@@ -32,6 +33,7 @@ export default class QuestionsController {
           viewedByAdmin: false,
           viewedByUser: true,
           message: req.body.answer,
+          sentByAdmin: true,
         });
 
         const savedQuestion = await question.save();
@@ -64,6 +66,7 @@ export default class QuestionsController {
         viewedByAdmin: false,
         viewedByUser: true,
         message: req.body.question,
+        sentByAdmin: false,
       });
       await question.save();
 
@@ -92,6 +95,7 @@ export default class QuestionsController {
         viewedByAdmin: false,
         viewedByUser: true,
         message: JSON.stringify(chatGPTResponse),
+        sentByAdmin: true,
       });
       await chatGPTMessage.save();
 
@@ -181,6 +185,7 @@ export default class QuestionsController {
         viewedByAdmin: true,
         viewedByUser: false,
         message: req.body.answer,
+        sentByAdmin: true,
       });
 
       await message.save();

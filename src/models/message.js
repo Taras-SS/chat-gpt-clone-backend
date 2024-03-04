@@ -15,6 +15,9 @@ const userSchema = mongoose.Schema({
   createdAt: {
     type: Number,
   },
+  sentByAdmin: {
+    type: Boolean,
+  },
 });
 
 const messageModel = mongoose.model("Message", userSchema);
