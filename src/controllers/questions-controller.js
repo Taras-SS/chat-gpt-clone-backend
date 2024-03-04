@@ -24,7 +24,7 @@ export default class QuestionsController {
           viewedByAdmin: false,
           viewedByUser: true,
           message: req.body.question,
-          sentByAdmin: false,
+          sentByAdmin: true,
         });
 
         const answer = new Message({
@@ -33,7 +33,7 @@ export default class QuestionsController {
           viewedByAdmin: false,
           viewedByUser: true,
           message: req.body.answer,
-          sentByAdmin: true,
+          sentByAdmin: false,
         });
 
         const savedQuestion = await question.save();
