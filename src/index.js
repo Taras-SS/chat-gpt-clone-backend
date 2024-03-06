@@ -7,6 +7,7 @@ import morgan from "morgan";
 import startServer from "./start.js";
 import cors from "cors";
 import { adminsMapper, clientsMapper } from "./utils/index.js";
+import statusMonitor from "express-status-monitor";
 
 config();
 
@@ -28,6 +29,10 @@ app.use(bodyParser.json());
 app.use(morgan("combined"));
 app.use("/api", routes.questionRouters);
 app.use("/api/auth", routes.authRouter);
+
+if (process.env.ENABLE_STATUS_MONITOR === "true") {
+  app.use(statusMonitor());
+}
 
 io.on("connection", function (socket) {
   console.log(socket.id);

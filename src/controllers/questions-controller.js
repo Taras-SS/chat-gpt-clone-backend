@@ -2,6 +2,7 @@ import { OpenAIService } from "../services/index.js";
 import Message from "../models/message.js";
 import { jwtDecode } from "jwt-decode";
 import { adminsMapper, clientsMapper } from "../utils/index.js";
+import { staticQuestions } from "../constants/index.js";
 
 export default class QuestionsController {
   constructor() {}
@@ -14,10 +15,50 @@ export default class QuestionsController {
           .json({ message: "clientSessionId was not provided" });
       }
 
-      const isStaticMessage =
-        req.body.question?.trim() && req.body.answer?.trim();
+      if (!req.body.question?.trim()) {
+        return res.status(400).json({ message: "question was not provided" });
+      }
 
-      if (isStaticMessage) {
+      const staticQuestion = staticQuestions.find(
+        ({ question }) => question === req.body.question.trim(),
+      );
+      if (staticQuestion) {
+        const question = new Message({
+          clientSessionId: req.body.clientSessionId,
+          createdAt: new Date().getTime(),
+          viewedByAdmin: false,
+          viewedByUser: true,
+          message: staticQuestion.question,
+          sentByAdmin: true,
+        });
+
+        const answer = new Message({
+          clientSessionId: req.body.clientSessionId,
+          createdAt: new Date().getTime(),
+          viewedByAdmin: false,
+          viewedByUser: true,
+          message: staticQuestion.answer,
+          sentByAdmin: false,
+        });
+
+        const savedQuestion = await question.save();
+        const savedAnswer = await answer.save();
+
+        adminsMapper.map((admin) =>
+          req.io.to(admin.socketId).emit("send-question-to-admin", {
+            question: staticQuestion.question,
+            answer: staticQuestion.answer,
+            clientSessionId: req.body.clientSessionId,
+          }),
+        );
+
+        return res
+          .status(201)
+          .json({ answer: savedAnswer, question: savedQuestion });
+      }
+
+      const isQuiz = req.body.question?.trim() && req.body.answer?.trim();
+      if (isQuiz) {
         const question = new Message({
           clientSessionId: req.body.clientSessionId,
           createdAt: new Date().getTime(),
@@ -55,10 +96,6 @@ export default class QuestionsController {
       const keyWords = process.env.KEY_WORDS?.split(",")
         .map((keyWord) => keyWord.trim())
         .filter(Boolean);
-
-      if (!req.body.question?.trim()) {
-        return res.status(400).json({ message: "question was not provided" });
-      }
 
       const question = new Message({
         clientSessionId: req.body.clientSessionId,
