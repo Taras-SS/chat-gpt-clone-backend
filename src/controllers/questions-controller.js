@@ -29,7 +29,7 @@ export default class QuestionsController {
           viewedByAdmin: false,
           viewedByUser: true,
           message: staticQuestion.question,
-          sentByAdmin: true,
+          sentByAdmin: false,
         });
 
         const answer = new Message({
@@ -38,7 +38,7 @@ export default class QuestionsController {
           viewedByAdmin: false,
           viewedByUser: true,
           message: JSON.stringify([staticQuestion.answer]),
-          sentByAdmin: false,
+          sentByAdmin: true,
         });
 
         await question.save();
