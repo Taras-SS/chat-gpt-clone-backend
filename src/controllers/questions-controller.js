@@ -37,12 +37,12 @@ export default class QuestionsController {
           createdAt: new Date().getTime(),
           viewedByAdmin: false,
           viewedByUser: true,
-          message: staticQuestion.answer,
+          message: JSON.stringify([staticQuestion.answer]),
           sentByAdmin: false,
         });
 
-        const savedQuestion = await question.save();
-        const savedAnswer = await answer.save();
+        await question.save();
+        await answer.save();
 
         adminsMapper.map((admin) =>
           req.io.to(admin.socketId).emit("send-question-to-admin", {
@@ -52,9 +52,7 @@ export default class QuestionsController {
           }),
         );
 
-        return res
-          .status(201)
-          .json({ answer: savedAnswer, question: savedQuestion });
+        return res.status(201).json({ answers: [staticQuestion.answer] });
       }
 
       const isQuiz = req.body.question?.trim() && req.body.answer?.trim();
