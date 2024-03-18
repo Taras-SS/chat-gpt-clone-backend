@@ -18,6 +18,15 @@ const userSchema = mongoose.Schema({
   sentByAdmin: {
     type: Boolean,
   },
+  userName: {
+    type: String,
+  },
+  clientEmail: {
+    type: String,
+  },
+  clientPhoneNumber: {
+    type: String,
+  },
 });
 
 const messageModel = mongoose.model("Message", userSchema);

@@ -15,11 +15,27 @@ export default class QuestionsController {
           .json({ message: "clientSessionId was not provided" });
       }
 
+      if (!req.body.userName) {
+        return res.status(400).json({ message: "userName was not provided" });
+      }
+
+      if (!req.body.clientEmail) {
+        return res
+          .status(400)
+          .json({ message: "clientEmail was not provided" });
+      }
+
+      if (!req.body.clientPhoneNumber) {
+        return res
+          .status(400)
+          .json({ message: "clientPhoneNumber was not provided" });
+      }
+
       if (!req.body.question?.trim()) {
         return res.status(400).json({ message: "question was not provided" });
       }
 
-      const staticQuestion = staticQuestions.find(
+      const staticQuestion = staticQuestions?.find(
         ({ question }) => question === req.body.question.trim(),
       );
       if (staticQuestion) {
@@ -30,6 +46,9 @@ export default class QuestionsController {
           viewedByUser: true,
           message: staticQuestion.question,
           sentByAdmin: false,
+          userName: req.body.userName,
+          clientEmail: req.body.clientEmail,
+          clientPhoneNumber: req.body.clientPhoneNumber,
         });
 
         const answer = new Message({
@@ -39,6 +58,9 @@ export default class QuestionsController {
           viewedByUser: true,
           message: JSON.stringify([staticQuestion.answer]),
           sentByAdmin: true,
+          userName: req.body.userName,
+          clientEmail: req.body.clientEmail,
+          clientPhoneNumber: req.body.clientPhoneNumber,
         });
 
         await question.save();
@@ -49,6 +71,9 @@ export default class QuestionsController {
             question: staticQuestion.question,
             answer: staticQuestion.answer,
             clientSessionId: req.body.clientSessionId,
+            userName: req.body.userName,
+            clientEmail: req.body.clientEmail,
+            clientPhoneNumber: req.body.clientPhoneNumber,
           }),
         );
 
@@ -64,6 +89,9 @@ export default class QuestionsController {
           viewedByUser: true,
           message: req.body.question,
           sentByAdmin: true,
+          userName: req.body.userName,
+          clientEmail: req.body.clientEmail,
+          clientPhoneNumber: req.body.clientPhoneNumber,
         });
 
         const answer = new Message({
@@ -73,6 +101,9 @@ export default class QuestionsController {
           viewedByUser: true,
           message: req.body.answer,
           sentByAdmin: false,
+          userName: req.body.userName,
+          clientEmail: req.body.clientEmail,
+          clientPhoneNumber: req.body.clientPhoneNumber,
         });
 
         const savedQuestion = await question.save();
@@ -83,6 +114,9 @@ export default class QuestionsController {
             question: req.body.question,
             answer: req.body.answer,
             clientSessionId: req.body.clientSessionId,
+            userName: req.body.userName,
+            clientEmail: req.body.clientEmail,
+            clientPhoneNumber: req.body.clientPhoneNumber,
           }),
         );
 
@@ -92,8 +126,8 @@ export default class QuestionsController {
       }
 
       const keyWords = process.env.KEY_WORDS?.split(",")
-        .map((keyWord) => keyWord.trim())
-        .filter(Boolean);
+        ?.map((keyWord) => keyWord.trim())
+        ?.filter(Boolean);
 
       const question = new Message({
         clientSessionId: req.body.clientSessionId,
@@ -102,10 +136,13 @@ export default class QuestionsController {
         viewedByUser: true,
         message: req.body.question,
         sentByAdmin: false,
+        userName: req.body.userName,
+        clientEmail: req.body.clientEmail,
+        clientPhoneNumber: req.body.clientPhoneNumber,
       });
       await question.save();
 
-      const containsKeyword = keyWords.find((keyWord) =>
+      const containsKeyword = keyWords?.find((keyWord) =>
         req.body.question.includes(keyWord),
       );
 
@@ -114,6 +151,9 @@ export default class QuestionsController {
           req.io.to(admin.socketId).emit("send-question-to-admin", {
             question: req.body.question,
             clientSessionId: req.body.clientSessionId,
+            userName: req.body.userName,
+            clientEmail: req.body.clientEmail,
+            clientPhoneNumber: req.body.clientPhoneNumber,
           }),
         );
 
@@ -131,6 +171,9 @@ export default class QuestionsController {
         viewedByUser: true,
         message: JSON.stringify(chatGPTResponse),
         sentByAdmin: true,
+        userName: req.body.userName,
+        clientEmail: req.body.clientEmail,
+        clientPhoneNumber: req.body.clientPhoneNumber,
       });
       await chatGPTMessage.save();
 
@@ -139,6 +182,9 @@ export default class QuestionsController {
           question: req.body.question,
           answer: chatGPTResponse,
           clientSessionId: req.body.clientSessionId,
+          userName: req.body.userName,
+          clientEmail: req.body.clientEmail,
+          clientPhoneNumber: req.body.clientPhoneNumber,
         }),
       );
 
@@ -214,6 +260,14 @@ export default class QuestionsController {
         return res.status(400).json({ message: "answer was not provided" });
       }
 
+      const previousMessage = await Message.findOne(
+        {
+          clientSessionId: req.body.clientSessionId,
+        },
+        null,
+        { sort: { createdAt: -1 } },
+      );
+
       const message = new Message({
         clientSessionId: req.body.clientSessionId,
         createdAt: new Date().getTime(),
@@ -221,11 +275,14 @@ export default class QuestionsController {
         viewedByUser: false,
         message: req.body.answer,
         sentByAdmin: true,
+        userName: previousMessage.userName,
+        clientEmail: previousMessage.clientEmail,
+        clientPhoneNumber: previousMessage.clientPhoneNumber,
       });
 
       await message.save();
 
-      const clientSocketId = clientsMapper.find(
+      const clientSocketId = clientsMapper?.find(
         (user) => user.sessionId === req.body.clientSessionId,
       );
       if (clientSocketId) {
